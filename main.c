@@ -8,8 +8,8 @@ typedef struct pokemon pokemon_t;
 
 //Usada para pasarle datos y ajustes a copiar_agregar_pokemons, usando el ptr comodin
 struct caja_datos {
-        hash_t *hash;
-        bool por_nombre;
+	hash_t *hash;
+	bool por_nombre;
 };
 
 void destruir_pokemon(void *pokemon)
@@ -91,26 +91,28 @@ bool copia_agrega_pokemon(pokemon_t *el_pokemon, void *contexto)
 	if (pokemon_dinamico == NULL || contexto == NULL)
 		return false;
 
-        struct caja_datos *config = contexto;
+	struct caja_datos *config = contexto;
 	*pokemon_dinamico = *el_pokemon;
 	pokemon_dinamico->nombre = copiar_string(el_pokemon->nombre);
-        char id_string[16];
-        sprintf(id_string, "%i", pokemon_dinamico->id);
+	char id_string[16];
+	sprintf(id_string, "%i", pokemon_dinamico->id);
 
 	if (pokemon_dinamico->nombre == NULL) {
 		free(pokemon_dinamico);
 		return false;
 	}
 
-        if(config->por_nombre)
-	        return hash_insertar(config->hash, pokemon_dinamico->nombre, pokemon_dinamico, NULL);
-        else
-                return hash_insertar(config->hash, id_string, pokemon_dinamico, NULL);
+	if (config->por_nombre)
+		return hash_insertar(config->hash, pokemon_dinamico->nombre,
+				     pokemon_dinamico, NULL);
+	else
+		return hash_insertar(config->hash, id_string, pokemon_dinamico,
+				     NULL);
 }
 
 int main(int argc, char *argumento[])
 {
-	if (argc < 2) {
+	if (argc < 5) {
 		printf("Error: Faltan argumentos!\n");
 		return 1;
 	}
@@ -119,24 +121,25 @@ int main(int argc, char *argumento[])
 	if (pokemons_1 == NULL)
 		return 1;
 
-        hash_t *hash_pokemons = hash_crear(tp1_cantidad(pokemons_1)*2);
-        if(hash_pokemons == NULL)
-                return 1;
+	hash_t *hash_pokemons = hash_crear(tp1_cantidad(pokemons_1) * 2);
+	if (hash_pokemons == NULL)
+		return 1;
 
-        struct caja_datos config_copias;
-        config_copias.hash = hash_pokemons;
-        if(strcmp(argumento[3], "nombre") == 0)
-                config_copias.por_nombre = true;
-        else
-                config_copias.por_nombre = false;
+	struct caja_datos config_copias;
+	config_copias.hash = hash_pokemons;
+	if (strcmp(argumento[3], "nombre") == 0)
+		config_copias.por_nombre = true;
+	else
+		config_copias.por_nombre = false;
 
-        if(tp1_con_cada_pokemon(pokemons_1, copia_agrega_pokemon, &config_copias) != tp1_cantidad(pokemons_1))
-                return 1;
+	if (tp1_con_cada_pokemon(pokemons_1, copia_agrega_pokemon,
+				 &config_copias) != tp1_cantidad(pokemons_1))
+		return 1;
 
-        tp1_destruir(pokemons_1);
+	tp1_destruir(pokemons_1);
 
-        pokemon_t *pokemon_actual = NULL;
-        int argumento_4_id;
+	pokemon_t *pokemon_actual = NULL;
+	int argumento_4_id;
 
 	/*---------Manejo de posibilidades---------*/
 	if (strcmp(argumento[3], "id") == 0) {
@@ -158,5 +161,7 @@ int main(int argc, char *argumento[])
 			printf("Error: No se encontro ese pokemon :(\n");
 		}
 	}
-        
+
+	hash_destruir_todo(hash_pokemons, destruir_pokemon);
+	return 0;
 }

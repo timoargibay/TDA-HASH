@@ -8,11 +8,15 @@ compilar_todo: src/*.c main.c
 	gcc $(CFLAGS) -c src/hash.c -o archivos_objeto/hash.o
 	gcc $(CFLAGS) -c src/extras_tp1.c -o archivos_objeto/extras_tp1.o
 	gcc $(CFLAGS) -c src/tp1.c -o archivos_objeto/tp1.o
+	gcc $(CFLAGS) archivos_objeto/*.o pruebas_alumno.c -o pruebas_alumno
 	gcc $(CFLAGS) archivos_objeto/*.o main.c -o main
 
-valgrind-alumno: pruebas_alumno
-	valgrind $(VALGRIND_FLAGS) ./pruebas_alumno
+valgrind-main: compilar_todo
 	valgrind $(VALGRIND_FLAGS) ./main ejemplo_main_valgrind.txt buscar nombre Pikachu
+	valgrind $(VALGRIND_FLAGS) ./main ejemplo_main_valgrind.txt buscar id 84
+
+valgrind-pruebas: compilar_todo
+	valgrind $(VALGRIND_FLAGS) ./pruebas_alumno
 
 pruebas_alumno: src/*.c pruebas_alumno.c
 	$(CC) $(CFLAGS) src/*.c pruebas_alumno.c -o pruebas_alumno
@@ -27,4 +31,4 @@ format:
 preparar_entrega: compilar_todo format
 	rm -f main
 	rm -f pruebas_alumno
-	rm -r archivos_objeto
+	rm -f archivos_objeto/*.o
