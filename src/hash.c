@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <string.h>
 #include "hash.h"
 
 typedef struct nodo {
@@ -12,22 +14,25 @@ struct hash {
         size_t cantidad_elementos;
 };
 
-size_t funcion_hash(const char *clave, size_t tamaño_tabla)
+static size_t funcion_hash(const char *clave, size_t tamaño_tabla)
 {
         if(clave == NULL || tamaño_tabla == 0)
                 return 0;
         
         size_t hash = 5381;
-        int c;
+        size_t c;
 
-        while((c = *clave++))
+        while((c = (unsigned char)*clave++))
                 hash = ((hash << 5) + hash) + c;
         
         return hash%tamaño_tabla;
 }
 
-nodo_t *crear_nodo(const char *clave, void *valor)
+static nodo_t *crear_nodo(const char *clave, void *valor)
 {
+        if(clave == NULL)
+                return NULL;
+        
         nodo_t *nuevo_nodo = calloc(1, sizeof(nodo_t));
         if(nuevo_nodo == NULL)
                 return NULL;
@@ -35,6 +40,37 @@ nodo_t *crear_nodo(const char *clave, void *valor)
         nuevo_nodo->clave = clave;
         nuevo_nodo->valor = valor;
         return nuevo_nodo;
+}
+
+static nodo_t *buscador(hash_t *hash, const char *clave, nodo_t **padre)
+{
+        if(hash == NULL || hash->capacidad == 0 || clave == NULL)
+                return NULL;
+
+        nodo_t *el_padre = NULL;
+        nodo_t *nodo_actual = NULL;
+        size_t posicion = funcion_hash(clave, hash->capacidad);
+        nodo_actual = hash->tabla[posicion];
+
+        //Si en ese lugar no hay nada, entonces no se encontró
+        if(nodo_actual == NULL)
+                return NULL;
+        
+        //Si hay cosas pero la clave no coincide, busco adentro
+        while(nodo_actual != NULL) {
+                if(strcmp(nodo_actual->clave, clave) == 0) {
+                        break;
+                }
+                else {
+                        el_padre = nodo_actual;
+                        nodo_actual = nodo_actual->siguiente;
+                }
+        }
+
+        if(padre != NULL) 
+                *padre = el_padre;
+
+        return nodo_actual;
 }
 
 //---------------Primitivas del TDA---------------//
@@ -54,7 +90,7 @@ hash_t *hash_crear(size_t capacidad_inicial)
         if(nuevo_hash == NULL)
                 return NULL;
 
-        nuevo_hash->tabla = calloc(capacidad_a_usar, sizeof(nodo_t*)*capacidad_a_usar);
+        nuevo_hash->tabla = calloc(capacidad_a_usar, sizeof(nodo_t*));
         if(nuevo_hash->tabla == NULL) {
                 free(nuevo_hash);
                 return NULL;
@@ -96,8 +132,30 @@ bool hash_insertar(hash_t *hash, char *clave, void *valor, void **encontrado)
                 return false;
 
         size_t posicion = funcion_hash(clave, hash->capacidad);
+        nodo_t *nodo_actual = hash->tabla[posicion];
 
-        *encontrado = hash_buscar(hash, clave);
+        if(encontrado != NULL)
+                *encontrado = hash_buscar(hash, clave);
+
+        if(*encontrado != NULL) {
+                while(nodo_actual != NULL && strcmp(nodo_actual->clave, clave) != 0)
+                        nodo_actual = nodo_actual->siguiente;
+
+                nodo_actual->valor = valor;
+        } else if(nodo_actual != NULL){
+                nodo_t *nuevo_nodo = crear_nodo(clave, valor);
+                if(nuevo_nodo == NULL)
+                        return false;
+                
+                nodo_actual->siguiente = nuevo_nodo;
+        } else {
+                hash->tabla[posicion] = crear_nodo(clave, valor);
+                if(hash->tabla[posicion] == NULL)
+                        return false;
+        }
+
+        hash->cantidad_elementos++;
+        return true;
 }
 
 /**
@@ -108,16 +166,11 @@ void *hash_buscar(hash_t *hash, char *clave)
         if(hash == NULL || hash->capacidad == 0 || clave == NULL)
                 return NULL;
 
-        size_t valor = funcion_hash(clave, hash->capacidad);
-        nodo_t *nodo_actual = hash->tabla[valor];
+        nodo_t *nodo = buscador(hash, clave, NULL);
 
-        while(nodo_actual != NULL) {
-                if(strcmp(nodo_actual->clave, clave) == 0)
-                        return nodo_actual->valor;
-                
-                nodo_actual = nodo_actual->siguiente;
-        }
-
+        if(nodo != NULL)
+                return nodo->valor;
+        
         return NULL;
 }
 
@@ -140,10 +193,32 @@ bool hash_contiene(hash_t *hash, char *clave)
  */
 void *hash_quitar(hash_t *hash, char *clave)
 {
-        if(hash == NULL)
+        if(hash == NULL || clave == NULL)
                 return NULL;
 
-        size_t posicion = funcion_hash(clave, hash->capacidad);
+        nodo_t *nodo_padre = NULL;
+        nodo_t *nodo_eliminar = buscador(hash, clave, &nodo_padre);
+        void *dato_eliminado = NULL;
+
+        if(nodo_padre != NULL && nodo_eliminar != NULL) {
+                dato_eliminado = nodo_eliminar->valor;
+                nodo_padre->siguiente = nodo_eliminar->siguiente;
+                hash->cantidad_elementos--;
+                free(nodo_eliminar);
+                return dato_eliminado;
+        }
+
+        //Si llegué hasta aca, nodo_padre es NULL si o si entonces es el primero en esa posicion
+        if(nodo_eliminar != NULL) {
+                if(nodo_eliminar->siguiente != NULL)
+                        hash->tabla[funcion_hash(clave, hash->capacidad)] = nodo_eliminar->siguiente;
+
+                dato_eliminado = nodo_eliminar->valor;
+                free(nodo_eliminar);
+                return dato_eliminado;
+        } 
+
+        return NULL;
 }
 
 /**
@@ -170,7 +245,7 @@ size_t hash_iterar(hash_t *hash, bool (*f)(char *, void *, void *), void *ctx)
                         break;
 
                 while(estado == true && nodo_actual != NULL) {
-                        estado = f(nodo_actual->clave, nodo_actual->valor, ctx);
+                        estado = f((char*)nodo_actual->clave, nodo_actual->valor, ctx);
                         elementos_afectados++;
                         nodo_actual = nodo_actual->siguiente;
                 }
@@ -184,9 +259,6 @@ size_t hash_iterar(hash_t *hash, bool (*f)(char *, void *, void *), void *ctx)
  */
 void hash_destruir(hash_t *hash)
 {
-        if(hash == NULL)
-                return;
-
         hash_destruir_todo(hash, NULL);
 }
 
