@@ -347,6 +347,45 @@ void prueba_rehasheos()
 	hash_destruir(mi_hash);
 }
 
+void prueba_eliminar()
+{
+	hash_t *mi_hash = hash_crear(0);
+
+	char claves[32];
+	bool fallo = false;
+	size_t cantidad = 5000;
+
+	for (size_t i = 0; i < cantidad; i++) {
+		sprintf(claves, "claves_%li", i);
+
+		if (hash_insertar(mi_hash, claves, NULL, NULL) == false)
+			fallo = true;
+	}
+
+	size_t cantidad_segun_hash = hash_cantidad(mi_hash);
+
+	if (cantidad_segun_hash != cantidad) {
+		printf("Hay %ld elems.\n", cantidad_segun_hash);
+		fallo = true;
+	}
+
+	for (size_t i = 0; i < cantidad; i++) {
+		sprintf(claves, "claves_%li", i);
+
+		hash_quitar(mi_hash, claves);
+	}
+
+	if (hash_cantidad(mi_hash) != 0)
+		fallo = true;
+
+	pa2m_afirmar(
+		fallo == false,
+		"Se insertaron %ld elementos y se eliminaron bien uno a uno",
+		cantidad);
+
+	hash_destruir(mi_hash);
+}
+
 int main()
 {
 	pa2m_nuevo_grupo("============== Primitivas HASH ==============");
@@ -366,6 +405,7 @@ int main()
 	prueba_encontrado_me_da_valor_viejo();
 	prueba_insertar_clave_null();
 	prueba_rehasheos();
+	prueba_eliminar();
 
 	return pa2m_mostrar_reporte();
 }
