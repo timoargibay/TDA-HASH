@@ -4,7 +4,7 @@
 
 # TDA HASH
 
-## Repositorio de (Nombre Apellido) - (Padrón) - (Mail)
+## Repositorio de Timoteo Argibay - 113678 - targibay@fi.uba.ar
 
 - Para compilar:
 
@@ -31,13 +31,13 @@ como los encontrados en el tda lista, esto resulto especialmente util para manej
 
 estructura de hash:
 <div align="center">
-<img src="hash_t.jpeg">
+<img src="img/hash_t.jpeg">
 </div>
 
 estructura del nodo de hash:
 
 <div align="center">
-<img src="nodo_t_nodohash.jpeg">
+<img src="img/nodo_t_nodohash.jpeg">
 </div>
 
 ## Respuestas a las preguntas teóricas
@@ -52,6 +52,9 @@ estructura del nodo de hash:
 - Para el manejo de colisiones hay muchos metodos pero el que utilice yo para este hash abierto fue que en caso de colision, se enlaze el nuevo nodo al que ya estaba y se cree una lista de nodos simplemente enlazados (encadenamiento). Si se tratara de un hash cerrado lo que se tendria que hacer seria mover a la siguiente posicion hasta encontrar una posicion vacia e insertarlo ahi, esto es a lo que se llama "Probing" y al buscar, si vemos que hay una colision, hacemos lo mismo, sabiendo que si encontramos un lugar vacio que nunca se uso y que no contiene lo que buscamos, significa que entonces lo que buscamos no existe.
 
 Caso de un hash cerrado:
+<div align="center">
+<img src="img/hash_Cerrado.jpeg">
+</div>
 
 
 - El tamaño de la tabla es muy importante para el manejo de colisiones, por lo general se trata de mantener el factor de carga (es decir, cuantos elementos hay en la tabla sobre su capacidad total) en un valor menor a 0,7 ya que despues se pierde mucha eficiencia debido a que hay colisiones, cuando se pasa este nivel lo que se sugiere hacer es un "rehashing", donde basicamente realocamos la tabla y volvemos a cargar todo con una capacidad mas grande (normalmente *2 de lo que ya habia), asi nos liberamos de muchas coliciones y mantenemos la eficiencia lo mas cerca a O(1) posible. Esto si bien puede parecer innecesario pq en caso de haber colisiones se degenera en una lista de nodos, conviene evitarlo pq puede rapidamente degradar la eficiencia de la tabla.
