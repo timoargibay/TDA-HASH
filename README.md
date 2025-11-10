@@ -37,7 +37,7 @@ estructura de hash:
 estructura del nodo de hash:
 
 <div align="center">
-<img src="img/nodo_t_nodohash.jpeg">
+<img src="img/nodo_t _nodohash.jpeg">
 </div>
 
 ## Respuestas a las preguntas teóricas
